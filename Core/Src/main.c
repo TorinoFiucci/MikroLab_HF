@@ -65,6 +65,8 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
+	volatile uint8_t brightness_percentage = 100;
+
 	volatile uint16_t adc_data[2];
 
 	volatile static uint16_t sensor1_state = SENSOR_STATE_NOT_PRESSED;
@@ -129,7 +131,7 @@ int main(void)
 
 	backlight_init(&htim1); // Initialize and start the backlight PWM
 
-	backlight_set_brightness(&htim1, 100); // Set backlight to 50% brightness
+	backlight_set_brightness(&htim1, brightness_percentage); // Set backlight to 50% brightness
 
 	Display_On();
 
@@ -483,12 +485,30 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if(GPIO_Pin == B1_Pin){
+		if(brightness_percentage >= 100){
+			brightness_percentage = 20;
+		}
+		else{
+			brightness_percentage += 20;
+		}
+
+		backlight_set_brightness(&htim1, brightness_percentage);
+	}
+}
+
 
 /* USER CODE END 4 */
 
