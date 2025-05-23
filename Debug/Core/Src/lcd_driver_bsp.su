@@ -1,0 +1,6 @@
+../Core/Src/lcd_driver_bsp.c:5:6:Display_On	8	static
+../Core/Src/lcd_driver_bsp.c:40:5:Set_Coloumn	16	static
+../Core/Src/lcd_driver_bsp.c:101:5:Set_Page	16	static
+../Core/Src/lcd_driver_bsp.c:145:6:E_Pulse	8	static
+../Core/Src/lcd_driver_bsp.c:153:6:Write_Data_Bits	16	static
+../Core/Src/lcd_driver_bsp.c:212:6:Draw_R_Letter	24	static

@@ -1,0 +1,2 @@
+../Core/Src/backlight_pwm.c:9:6:backlight_init	16	static
+../Core/Src/backlight_pwm.c:25:6:backlight_set_brightness	24	static
