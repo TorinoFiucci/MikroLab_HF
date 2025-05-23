@@ -24,6 +24,10 @@
 #include "lcd_driver_bsp.h"
 #include "backlight_pwm.h"
 #include "stdint.h"
+
+#include <stdio.h>
+#include <string.h>
+
 //#include "adc.h"
 
 /* USER CODE END Includes */
@@ -35,6 +39,14 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+// --- Szenzor állapot definíciók ---
+#define SENSOR_PRESSED_THRESHOLD_LOW   2950
+#define SENSOR_PRESSED_THRESHOLD_HIGH  3300
+
+#define SENSOR_STATE_NOT_PRESSED 0
+#define SENSOR_STATE_PRESSED     1
+
 
 /* USER CODE END PD */
 
@@ -50,12 +62,16 @@ DMA_HandleTypeDef hdma_adc;
 TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart2;
+UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 
-uint8_t adc_ready;
+	volatile uint16_t adc_data[2];
 
-uint16_t adc_buff[2];
+	volatile static uint16_t sensor1_state = SENSOR_STATE_NOT_PRESSED;
+	volatile static uint16_t sensor2_state = SENSOR_STATE_NOT_PRESSED;
+
+	char uart_buf[100];
 
 /* USER CODE END PV */
 
@@ -66,6 +82,7 @@ static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_ADC_Init(void);
+static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -73,7 +90,7 @@ static void MX_ADC_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-uint16_t adc_data[2];
+
 
 /* USER CODE END 0 */
 
@@ -110,6 +127,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM1_Init();
   MX_ADC_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
 	backlight_init(&htim1); // Initialize and start the backlight PWM
@@ -126,6 +144,9 @@ int main(void)
 	HAL_GPIO_WritePin(InfraLedTr1_GPIO_Port, InfraLedTr1_Pin, SET);
 	HAL_GPIO_WritePin(InfraLedTr2_GPIO_Port, InfraLedTr2_Pin, SET);
 
+//	volatile uint16_t sensor1_raw_value;
+//	volatile uint16_t sensor2_raw_value;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -133,6 +154,39 @@ int main(void)
 	while (1)
 	{
 
+
+
+
+//		uint16_t sensor1_raw_value = adc_data[0];
+//		uint16_t sensor2_raw_value = adc_data[1];
+
+
+		if ((adc_data[0] >= SENSOR_PRESSED_THRESHOLD_LOW) && (adc_data[0] <= SENSOR_PRESSED_THRESHOLD_HIGH))
+		{
+			sensor1_state = SENSOR_STATE_PRESSED;
+		}
+		else
+		{
+			sensor1_state = SENSOR_STATE_NOT_PRESSED;
+		}
+
+
+		if ((adc_data[1] >= SENSOR_PRESSED_THRESHOLD_LOW) && (adc_data[1] <= SENSOR_PRESSED_THRESHOLD_HIGH))
+		{
+			sensor2_state = SENSOR_STATE_PRESSED;
+		}
+		else
+		{
+			sensor2_state = SENSOR_STATE_NOT_PRESSED;
+		}
+
+		sprintf(uart_buf, "Szenzor1: %s, Szenzor2: %s ",
+		            (sensor1_state == SENSOR_STATE_PRESSED) ? "LENYOMVA" : "NINCS LENYOMVA",
+		            (sensor2_state == SENSOR_STATE_PRESSED) ? "LENYOMVA" : "NINCS LENYOMVA" );
+
+		HAL_UART_Transmit(&huart3, (uint8_t*)uart_buf, strlen(uart_buf), 1000);
+
+		HAL_Delay(1000);
 
     /* USER CODE END WHILE */
 
@@ -180,8 +234,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART3|RCC_PERIPHCLK_USART2;
   PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
+  PeriphClkInit.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -362,6 +417,41 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * @brief USART3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART3_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART3_Init 0 */
+
+  /* USER CODE END USART3_Init 0 */
+
+  /* USER CODE BEGIN USART3_Init 1 */
+
+  /* USER CODE END USART3_Init 1 */
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 115200;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART3_Init 2 */
+
+  /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -438,13 +528,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* h){
-
-	adc_ready = 1;
-
-}
-
 
 /* USER CODE END 4 */
 
