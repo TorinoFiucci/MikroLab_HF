@@ -85,12 +85,65 @@ static void MX_USART2_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_ADC_Init(void);
 /* USER CODE BEGIN PFP */
+void WaitForStartCondition(void);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+void WaitForStartCondition(void) {
+    uint16_t local_sensor1_raw_value;
+    uint16_t local_sensor2_raw_value;
+    uint32_t both_pressed_start_time = 0;
+    uint8_t  both_were_pressed_flag = 0;
+
+    HAL_GPIO_WritePin(InfraLedTr1_GPIO_Port, InfraLedTr1_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(InfraLedTr2_GPIO_Port, InfraLedTr2_Pin, GPIO_PIN_SET);
+
+    while (1) {
+        local_sensor1_raw_value = adc_data[0]; // Olvassuk a DMA által frissített adatot
+
+
+
+        if ((local_sensor1_raw_value >= SENSOR_PRESSED_THRESHOLD_LOW) && (local_sensor1_raw_value <= SENSOR_PRESSED_THRESHOLD_HIGH)) {
+            sensor1_state = SENSOR_STATE_PRESSED;
+        } else {
+            sensor1_state = SENSOR_STATE_NOT_PRESSED;
+        }
+
+        if ((local_sensor2_raw_value >= SENSOR_PRESSED_THRESHOLD_LOW) && (local_sensor2_raw_value <= SENSOR_PRESSED_THRESHOLD_HIGH)) {
+            sensor2_state = SENSOR_STATE_PRESSED;
+        } else {
+            sensor2_state = SENSOR_STATE_NOT_PRESSED;
+        }
+
+
+        if (sensor1_state == SENSOR_STATE_PRESSED && sensor2_state == SENSOR_STATE_PRESSED) {
+            if (!both_were_pressed_flag) {
+
+                both_pressed_start_time = HAL_GetTick();
+                both_were_pressed_flag = 1;
+            } else {
+
+                if (HAL_GetTick() - both_pressed_start_time >= 2000) {
+                    // Feltétel teljesült, kiléphetünk a várakozásból
+                    break;
+                }
+            }
+        } else {
+            // Legalább az egyik szenzor nincs lenyomva, vagy nem volt folyamatos
+            both_were_pressed_flag = 0; // Reseteljük a jelzőt
+        }
+
+        HAL_Delay(20);
+    }
+
+    // Miután kiléptünk a ciklusból (a játék indulhat):
+    LCD_Buffer_Init();
+
+    HAL_Delay(1000); // Rövid vizuális visszajelzés
+}
 
 
 /* USER CODE END 0 */
@@ -146,6 +199,15 @@ int main(void)
 	HAL_GPIO_WritePin(InfraLedTr1_GPIO_Port, InfraLedTr1_Pin, SET);
 	HAL_GPIO_WritePin(InfraLedTr2_GPIO_Port, InfraLedTr2_Pin, SET);
 
+
+
+
+	  WaitForStartCondition(); //START feltétel
+
+
+
+
+
 //	volatile uint16_t sensor1_raw_value;
 //	volatile uint16_t sensor2_raw_value;
 
@@ -156,10 +218,7 @@ int main(void)
 	while (1)
 	{
 
-
-
-
-
+		Clear_Display();
 
 		LCD_Set_Pixel(10, 20, 1);
 		LCD_Set_Pixel(15, 25, 1);

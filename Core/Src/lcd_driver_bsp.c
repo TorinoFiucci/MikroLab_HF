@@ -1,6 +1,7 @@
 #include "lcd_driver_bsp.h"
 #include "main.h"
 #include <string.h>
+#include "stdint.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -8,6 +9,8 @@
 
 // screen_buffer[lap_száma][x_koordináta]
 static uint8_t screen_buffer[SCREEN_PAGES][SCREEN_WIDTH];
+
+
 
 void LCD_Buffer_Init() {
 	memset(screen_buffer, 0x00, sizeof(screen_buffer));
@@ -288,15 +291,15 @@ void E_Pulse(){
 
 void Delay_us(volatile uint32_t microseconds)
 {
-  uint32_t delay_loops = (SystemCoreClock / 1000000) * microseconds;
-  //  ciklus overhead kompenzálása egy osztóval
-  delay_loops = ( (SystemCoreClock / 1000000) * microseconds ) / 6; // lehet, hogy a 6 helyett más kell majd
-  if (delay_loops == 0 && microseconds > 0) delay_loops = 1;
+	uint32_t delay_loops = (SystemCoreClock / 1000000) * microseconds;
+	//  ciklus overhead kompenzálása egy osztóval
+	delay_loops = ( (SystemCoreClock / 1000000) * microseconds ) / 6; // lehet, hogy a 6 helyett más kell majd
+	if (delay_loops == 0 && microseconds > 0) delay_loops = 1;
 
-  for (volatile uint32_t i = 0; i < delay_loops; ++i)
-  {
-    __NOP();
-  }
+	for (volatile uint32_t i = 0; i < delay_loops; ++i)
+	{
+		__NOP();
+	}
 }
 
 void Write_Data_Bits(uint8_t data){
@@ -383,7 +386,7 @@ void Draw_R_Letter(){
 		E_Pulse();
 
 	}
-
-
-
 }
+
+
+
