@@ -3,6 +3,8 @@
  ******************************************************************************
  * @file           : main.c
  * @brief          : Main program body
+ * @author         : Jordán Levente Tibor
+ * @neptun:        : ELMHX3
  ******************************************************************************
  * @attention
  *
@@ -24,7 +26,6 @@
 #include "lcd_driver_bsp.h"
 #include "backlight_pwm.h"
 #include "stdint.h"
-
 #include <stdio.h>
 #include <string.h>
 
@@ -134,8 +135,10 @@ int main(void)
 	backlight_set_brightness(&htim1, brightness_percentage); // Set backlight to 50% brightness
 
 	Display_On();
+	Clear_Display();
+	LCD_Buffer_Init();
 
-	Draw_R_Letter();
+	//Draw_R_Letter();
 
 	HAL_ADCEx_Calibration_Start(&hadc);
 	HAL_ADC_Start_DMA(&hadc, (uint32_t*)adc_data, 2);
@@ -152,6 +155,24 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 	while (1)
 	{
+
+
+
+
+
+
+		LCD_Set_Pixel(10, 20, 1);
+		LCD_Set_Pixel(15, 25, 1);
+		LCD_Set_Pixel(17, 20, 1);
+		LCD_Set_Pixel(15, 55, 1);
+
+		LCD_Refresh_Display();
+
+		HAL_Delay(1500);
+
+		Clear_Display();
+
+		HAL_Delay(1500);
 
 
 
